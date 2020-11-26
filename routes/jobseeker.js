@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 
-
 const jobSeekerController = require('../controllers/jobseeker')
+const checkAuth = require('../middleware/applicantCheckAuth')
 
 
 router.route('/signup')
@@ -14,14 +14,14 @@ router.route('/login')
     .post(jobSeekerController.postLogin)
 
 router.route('/jobs')
-    .get(jobSeekerController.getJobListingPage)
+    .get(checkAuth, jobSeekerController.getJobListingPage) 
 
 router.route('/job/:jobId')
-    .get(jobSeekerController.getJobDetailsPage)
+    .get(checkAuth, jobSeekerController.getJobDetailsPage)
 
 router.route('/apply/:jobId')
-    .get(jobSeekerController.getApplyJob)
-    .post(jobSeekerController.postApplyJob)
+    .get(checkAuth, jobSeekerController.getApplyJob)
+    .post(checkAuth, jobSeekerController.postApplyJob)
 
 
 module.exports = router

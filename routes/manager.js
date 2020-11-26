@@ -3,6 +3,7 @@ const router = express.Router()
 
 
 const managerController = require('../controllers/manager')
+const checkAuth = require('../middleware/managerCheckAuth')
 
 
 router.route('/')
@@ -17,23 +18,23 @@ router.route('/login')
     .post(managerController.postLogin)
 
 router.route('/createJobListing')
-    .get(managerController.getJobListing)
-    .post(managerController.postJobListing)
+    .get(checkAuth, managerController.getJobListing)
+    .post(checkAuth, managerController.postJobListing)
 
 router.route('/applications/:managerId')
-    .get(managerController.getJobApplications)
+    .get(checkAuth, managerController.getJobApplications)
 
 router.route('/applicant/school/:school')
-    .get(managerController.filterBySchool)
+    .get(checkAuth, managerController.filterBySchool)
 
 router.route('/applicant/skill/:skill')
-    .get(managerController.filterBySkill)
+    .get(checkAuth, managerController.filterBySkill)
 
 router.route('/applicant/skill/:yearsOfExperience')
-    .get(managerController.filterByYearsOfExperience)
+    .get(checkAuth, managerController.filterByYearsOfExperience)
 
 router.route('/applicant/:applicantId')
-    .get(managerController.getCandidates)
+    .get(checkAuth, managerController.getCandidates)
 
 
 module.exports = router

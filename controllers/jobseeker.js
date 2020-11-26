@@ -1,7 +1,12 @@
-const JobSeeker = require('../models/jobSeeker')
+const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
+
+const JobSeeker = require('../models/jobSeeker')
 const Applicant = require('../models/applicant')
 const Job = require('../models/job')
+const { JWT_KEY } = require('../config/key')
+
+
 
 const getSignup = (req, res, next) => {
     // render page for job seekers to signup
@@ -65,34 +70,37 @@ const getLogin = (req, res, next) => {
 }
 
 const postLogin = (req, res, next) => {
+    // console.log(req.body.email)
     JobSeeker.findOne({ email: req.body.email })
-    .then(jobSeeker => {
-        if(!req.body.email || !req.body.password){
-            res.status(404).json({
-                message: "Missing credentials"
-            })
-        }
-        if (!jobSeeker){
-            res.status(404).json({
-                message: "Auth failed!."
-            })
-        }
-        if (!bcrypt.compareSync(req.body.password, jobSeeker.password)){
-            res.status(401).json({
-                message: "Auth failed!."
-            })
-        } else{
-            res.status(200).json({
-                message: "Auth successful!."
-            })
-        }
+        .then(jobSeeker => {
+            if(!req.body.email || !req.body.password){
+                res.status(404).json({
+                    message: "Missing credentials"
+                })
+            }
+            if (!jobSeeker){
+                res.status(404).json({
+                    message: "Auth failed!."
+                })
+            }
+            if (!bcrypt.compareSync(req.body.password, jobSeeker.password)){
+                res.status(401).json({
+                    message: "Auth failed!."
+                })
+            } else{
+                const token = jwt.sign({ email: jobSeeker.email, id: jobSeeker._id }, JWT_KEY, { expiresIn: "1h" })
+                res.status(200).json({
+                    message: "Auth successful!.",
+                    token: token
+                })
+            }
     })
-    .catch(err => {
-        console.log(err)
-        res.status(500).json({
-            error: err
-        })
-    }) 
+        .catch(err => {
+            console.log(err)
+            res.status(500).json({
+                error: err
+            })
+        }) 
 }
 
 const getJobListingPage = (req, res, next) => {
@@ -101,7 +109,7 @@ const getJobListingPage = (req, res, next) => {
     Job.find()
         .then(jobs => {
             res.status(200).json({ 
-                message: jobs
+                Jobs: jobs
             })
         })
 }
@@ -113,7 +121,7 @@ const getJobDetailsPage = (req, res, next) => {
         .then(job => {
             res.status(200).json({
                 message: "Welcome to Details page!.",
-                job: job 
+                Job: job 
             })
         })
 }
@@ -131,6 +139,7 @@ const getApplyJob = (req, res, next) => {
 const postApplyJob = (req, res, next) => {
     const { firstName, lastName, email, location, school, yearOfExperience, placeOfWork, locationOfWorkplace, skill, resume, type, category } = req.body
     const jobId = req.params.jobId
+
     Applicant.findOne({ email: email })
         .then(applicant => {
             if (applicant){

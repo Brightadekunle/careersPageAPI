@@ -1,11 +1,12 @@
 const bcrypt = require('bcryptjs')
-const passport = require('passport')
+const jwt = require('jsonwebtoken')
 
 const Manager = require('../models/manager')
 const Job = require('../models/job')
 const Category = require('../models/category')
 const Type = require('../models/type')
 const Applicant = require('../models/applicant')
+const { JWT_KEY } = require('../config/key')
 
 const indexGet = (req, res, next) => {
     Manager.find()
@@ -268,8 +269,10 @@ const postLogin = (req, res, next) => {
                 })
             } else{
                 // redirect to probably the home or profile page of the manager
+                const token = jwt.sign({ email: manager.email, id: manager._id }, JWT_KEY, { expiresIn: "1h" })
                 res.status(200).json({
-                    message: "Auth successful!."
+                    message: "Auth successful!.",
+                    token: token
                 })
             }
         })
@@ -286,7 +289,6 @@ const getJobApplications = (req, res, next) => {
     const managerId = req.params.managerId
     Applicant.find({ manager: managerId })
         .then(applicants => {
-            console.log(applicants)
             if (applicants.length == 0){
                 res.status(404).json({
                     message: "You do not have any applicants"
