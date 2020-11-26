@@ -17,20 +17,20 @@ router.route('/login')
     .get(managerController.getLogin)
     .post(managerController.postLogin)
 
-router.route('/createJobListing')
+router.route('/createjob')
     .get(checkAuth, managerController.getJobListing)
     .post(checkAuth, managerController.postJobListing)
 
 router.route('/applications/:managerId')
     .get(checkAuth, managerController.getJobApplications)
 
-router.route('/applicant/school/:school')
+router.route('/applicant/:schoolname')
     .get(checkAuth, managerController.filterBySchool)
 
-router.route('/applicant/skill/:skill')
+router.route('/applicant/:skill')
     .get(checkAuth, managerController.filterBySkill)
 
-router.route('/applicant/skill/:yearsOfExperience')
+router.route('/applicant/:yearsofexperience')
     .get(checkAuth, managerController.filterByYearsOfExperience)
 
 router.route('/applicant/:applicantId')
