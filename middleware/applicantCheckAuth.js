@@ -1,17 +1,19 @@
-const jwt = require('jsonwebtoken')
-const { JWT_KEY } = require('../config/key')
+const JobSeeker = require('../models/jobSeeker')
 
-module.exports = (req, res, next) => {
-    try{
-        const decoded = jwt.verify(req.body.token, JWT_KEY)
-        req.userData = decoded
-        next()
-    } catch (err){
-        console.log(err)
-        return res.status(401).json({
-            message: "Auth failed", 
-            error: err
+
+let auth = (req, res, next) => {
+    let token = req.cookies.auth
+    JobSeeker.findByToken(token, (err, user) => {
+        if (err) throw err
+        if (!user) return res.json({
+            error: true
         })
-    }
-    
+        req.token=token
+        req.jobSeeker=user
+        next()
+    })
 }
+
+
+
+module.exports = { auth }

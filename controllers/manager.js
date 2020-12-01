@@ -246,42 +246,73 @@ const getLogin = (req, res, next) => {
 
 
 const postLogin = (req, res, next) => {
-    Manager.findOne({ email: req.body.email })
-        .then(manager => {
-            if(!req.body.department || !req.body.email || !req.body.password){
-                res.status(404).json({
-                    message: "Missing credentials"
+    let token = req.cookies.auth
+    Manager.findByToken(token, (err, user) => {
+        if (err) {
+            res.status(400).json({ 
+                error: err
+             })
+        }
+        if (user) {
+            res.status(400).json({
+                error: true,
+                message: "You are already logged in!."
+            })
+        } else {
+            Manager.findOne({ email: req.body.email })
+                .then(manager => {
+                    if(!req.body.department || !req.body.email || !req.body.password){
+                        res.status(404).json({
+                            message: "Missing credentials"
+                        })
+                    }
+                    if (manager.department != req.body.department){
+                        res.status(404).json({
+                            message: "Incorrect department!."
+                        })
+                    }
+                    if (!manager){
+                        res.status(404).json({
+                            message: "Auth failed!."
+                        })
+                    }
+                    if (!bcrypt.compareSync(req.body.password, manager.password)){
+                        res.status(401).json({
+                            message: "Password is incorrect!."
+                        })
+                    } else{
+                        // redirect to probably the home or profile page of the manager
+                        const token = jwt.sign({ email: manager.email, id: manager._id }, JWT_KEY, { expiresIn: "1h" })
+                        manager.generateToken(token, (err, user) => {
+                            if (err) return res.status(400).send(err)
+                            res.cookie('auth', token).json({
+                                isAuth: true,
+                                token: token
+                            })
+                        })
+                    }
                 })
-            }
-            if (manager.department != req.body.department){
-                res.status(404).json({
-                    message: "Incorrect department!."
+                .catch(err => {
+                    console.log(err)
+                    res.status(500).json({
+                        error: err
+                    })
                 })
-            }
-            if (!manager){
-                res.status(404).json({
-                    message: "Auth failed!."
-                })
-            }
-            if (!bcrypt.compareSync(req.body.password, manager.password)){
-                res.status(401).json({
-                    message: "Auth failed!."
-                })
-            } else{
-                // redirect to probably the home or profile page of the manager
-                const token = jwt.sign({ email: manager.email, id: manager._id }, JWT_KEY, { expiresIn: "1h" })
-                res.status(200).json({
-                    message: "Auth successful!.",
-                    token: token
-                })
-            }
-        })
-        .catch(err => {
-            console.log(err)
-            res.status(500).json({
+                }
+    })
+}
+
+const logoutUser = (req, res, next) => {
+    req.manager.deleteToken(req.token, (err, user) => {
+        if (err){
+            res.status(400).json({
                 error: err
             })
+        }
+        res.status(200).json({
+            message: "Logout successful"
         })
+    })
 }
 
 // To view all job applications for my department, query the applicant db and check for those that have my id registered under them
@@ -401,8 +432,9 @@ const getCandidates = (req, res, next) => {
 module.exports = {
     getSignup,
     postSignup,
-    getLogin,
+    getLogin, 
     postLogin,
+    logoutUser,
     indexGet,
     getJobListing,
     postJobListing,

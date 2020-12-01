@@ -70,37 +70,68 @@ const getLogin = (req, res, next) => {
 }
 
 const postLogin = (req, res, next) => {
-    // console.log(req.body.email)
-    JobSeeker.findOne({ email: req.body.email })
-        .then(jobSeeker => {
-            if(!req.body.email || !req.body.password){
-                res.status(404).json({
-                    message: "Missing credentials"
-                })
-            }
-            if (!jobSeeker){
-                res.status(404).json({
-                    message: "Auth failed!."
-                })
-            }
-            if (!bcrypt.compareSync(req.body.password, jobSeeker.password)){
-                res.status(401).json({
-                    message: "Auth failed!."
-                })
-            } else{
-                const token = jwt.sign({ email: jobSeeker.email, id: jobSeeker._id }, JWT_KEY, { expiresIn: "1h" })
-                res.status(200).json({
-                    message: "Auth successful!.",
-                    token: token
-                })
+    let token = req.cookies.auth
+    JobSeeker.findByToken(token, (err, user) => {
+        if (err) {
+            res.status(400).json({ 
+                error: err
+             })
+        }
+        if (user) {
+            res.status(400).json({
+                error: true,
+                message: "You are already logged in!."
+            })
+        }
+        else {
+            JobSeeker.findOne({ email: req.body.email })
+                .then(jobSeeker => {
+                    if(!req.body.email || !req.body.password){
+                        res.status(404).json({
+                            message: "Missing credentials"
+                        })
+                    }
+                    if (!jobSeeker){
+                        res.status(404).json({
+                            message: "Auth failed!."
+                        })
+                    }
+                    if (!bcrypt.compareSync(req.body.password, jobSeeker.password)){
+                        res.status(401).json({
+                            message: "Password is incorrect!."
+                        })
+                    } else{
+                        const token = jwt.sign({ email: jobSeeker.email, id: jobSeeker._id }, JWT_KEY, { expiresIn: "1h" })
+                        jobSeeker.generateToken(token, (err, user) => {
+                            if (err) return res.status(400).send(err)
+                            res.cookie('auth', token).json({
+                                isAuth: true,
+                                token: token
+                            })
+                        })
             }
     })
-        .catch(err => {
-            console.log(err)
-            res.status(500).json({
+                .catch(err => {
+                    console.log(err)
+                    res.status(500).json({
+                        error: err
+                    })
+                }) 
+        }
+    })
+}
+
+const logoutUser = (req, res, next) => {
+    req.jobSeeker.deleteToken(req.token, (err, user) => {
+        if (err){
+            res.status(400).json({
                 error: err
             })
-        }) 
+        }
+        res.status(200).json({
+            message: "Logout successful"
+        })
+    })
 }
 
 const getJobListingPage = (req, res, next) => {
@@ -204,6 +235,7 @@ module.exports = {
     postSignup,
     getLogin,
     postLogin,
+    logoutUser,
     getApplyJob,
     postApplyJob,
     getJobListingPage,

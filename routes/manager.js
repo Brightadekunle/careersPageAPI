@@ -3,7 +3,7 @@ const router = express.Router()
 
 
 const managerController = require('../controllers/manager')
-const checkAuth = require('../middleware/managerCheckAuth')
+const { auth } = require('../middleware/managerCheckAuth')
 
 
 router.route('/')
@@ -17,24 +17,27 @@ router.route('/login')
     .get(managerController.getLogin)
     .post(managerController.postLogin)
 
+router.route('/logout')
+    .get(auth, managerController.logoutUser)
+
 router.route('/createjob')
-    .get(checkAuth, managerController.getJobListing)
-    .post(checkAuth, managerController.postJobListing)
+    .get(auth, managerController.getJobListing)
+    .post(auth, managerController.postJobListing)
 
 router.route('/applications/:managerId')
-    .get(checkAuth, managerController.getJobApplications)
+    .get(auth, managerController.getJobApplications)
 
 router.route('/applicant/:schoolname')
-    .get(checkAuth, managerController.filterBySchool)
+    .get(auth, managerController.filterBySchool)
 
 router.route('/applicant/:skill')
-    .get(checkAuth, managerController.filterBySkill)
+    .get(auth, managerController.filterBySkill)
 
 router.route('/applicant/:yearsofexperience')
-    .get(checkAuth, managerController.filterByYearsOfExperience)
+    .get(auth, managerController.filterByYearsOfExperience)
 
 router.route('/applicant/:applicantId')
-    .get(checkAuth, managerController.getCandidates)
+    .get(auth, managerController.getCandidates)
 
 
 module.exports = router

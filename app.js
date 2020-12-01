@@ -2,7 +2,7 @@ const express = require('express')
 const morgan = require('morgan')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
-const session = require('cookie-session')
+const cookieParser = require('cookie-parser')
 
 
 const app = express()
@@ -17,6 +17,7 @@ mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 app.use(morgan("dev"))
 app.use(bodyParser.urlencoded({ extended:true }))
 app.use(bodyParser.json())
+app.use(cookieParser())
 
 // Preventing CORS errors CORS-Cross-Origin Resource Sharing
 app.use((req, res, next) => {
