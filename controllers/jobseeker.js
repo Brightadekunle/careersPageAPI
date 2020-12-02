@@ -7,7 +7,7 @@ const Job = require('../models/job')
 const { JWT_KEY } = require('../config/key')
 
 
-
+// Display signup on GET request
 const getSignup = (req, res, next) => {
     // render page for job seekers to signup
     res.status(200).json({
@@ -15,9 +15,11 @@ const getSignup = (req, res, next) => {
     })
 }
 
+// Handles signup submission on POST request
 const postSignup = (req, res, next) => {
     let { firstName, lastName, email, password } = req.body
 
+    // First check to make sure the email does not exist in the database
     JobSeeker.findOne({ email: email })
         .then(jobSeeker => {
             if (jobSeeker){
@@ -62,6 +64,7 @@ const postSignup = (req, res, next) => {
         })
 }
 
+// Displays login form on GET request
 const getLogin = (req, res, next) => {
     // render page for job seekers to login
     res.status(200).json({
@@ -69,7 +72,10 @@ const getLogin = (req, res, next) => {
     })
 }
 
+// Handles login submission on POST request
 const postLogin = (req, res, next) => {
+
+    // Checks if the job seeker currently has a token, if he does then he is logged in or else he is not
     let token = req.cookies.auth
     JobSeeker.findByToken(token, (err, user) => {
         if (err) {
@@ -121,7 +127,10 @@ const postLogin = (req, res, next) => {
     })
 }
 
+// Handles logout request
 const logoutUser = (req, res, next) => {
+    
+    // Logs out the user by deleting the token from the users database
     req.jobSeeker.deleteToken(req.token, (err, user) => {
         if (err){
             res.status(400).json({
@@ -134,6 +143,7 @@ const logoutUser = (req, res, next) => {
     })
 }
 
+// Displays the job listing page on GET request
 const getJobListingPage = (req, res, next) => {
 
     // Displays the job listing page
@@ -145,6 +155,7 @@ const getJobListingPage = (req, res, next) => {
         })
 }
 
+// Displays the job details page on GET request
 const getJobDetailsPage = (req, res, next) => {
     
     // Display the details page for a job
@@ -157,6 +168,7 @@ const getJobDetailsPage = (req, res, next) => {
         })
 }
 
+// DIsplays the page to apply for a job
 const getApplyJob = (req, res, next) => {
     // render page for jobseekers to apply
     const jobId = req.params.jobId
@@ -167,10 +179,16 @@ const getApplyJob = (req, res, next) => {
 }
 
 
+// Handles form submission for job application
 const postApplyJob = (req, res, next) => {
+
+    // Takes in all these parameters from the applicant
     const { firstName, lastName, email, location, school, yearOfExperience, placeOfWork, locationOfWorkplace, skill, resume, type, category } = req.body
+    
+    // Gets the job id
     const jobId = req.params.jobId
 
+    // Gets the particular applicant that is applying for the job
     Applicant.findOne({ email: email })
         .then(applicant => {
             if (applicant){
@@ -178,7 +196,7 @@ const postApplyJob = (req, res, next) => {
                     message: "Email already exist!."
                 })
             } else{
-                // How about query the Job database to get the job id and know which job the applicant is applying for
+                // Gets the job the applicant is applying for and also saves it to the applicant schema
                 Job.findById({ _id: jobId })
                     .then(job => {
                         const newApplicant = new Applicant({

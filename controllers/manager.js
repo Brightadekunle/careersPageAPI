@@ -23,6 +23,7 @@ const indexGet = (req, res, next) => {
         })
 }
 
+// Displays the job listing page on get request
 const getJobListing = (req, res, next) => {
     // The Job listing create page should be rendered here
     res.status(200).json({
@@ -30,6 +31,7 @@ const getJobListing = (req, res, next) => {
     })
 }
 
+// Handles POST request for a manages to create a job listing
 const postJobListing = async (req, res, next) => {
     let { title, salaryRange, description, location, otherInfo, dueDate, manager, category, type } = req.body
 
@@ -39,8 +41,11 @@ const postJobListing = async (req, res, next) => {
         })
     } else {
 
+        // Checks to see if the type and category already exist in the database
         const checkType = await Type.findOne({ name: type })
         const checkCategory = await Category.findOne({ name: category })
+
+        // If the type and category does not exist
         if (!checkType & !checkCategory){
             const newType = new Type({ name: type })
             newType.save()
@@ -78,6 +83,7 @@ const postJobListing = async (req, res, next) => {
                         error: err
                     })
                 })
+        // If the type exist but the category does not exist
         } else if (checkType && !checkCategory) {
             const newCategory = new Category({ name: category })
             newCategory.save()
@@ -111,6 +117,7 @@ const postJobListing = async (req, res, next) => {
                         error: err
                     })
                 })
+        // If the type does not exist but category exist
         } else if (!checkType && checkCategory){
             const newType = new Type({ name: type })
                 newType.save()
@@ -179,6 +186,7 @@ const postJobListing = async (req, res, next) => {
 
 }
 
+// Displays signup form on GET request
 const getSignup = (req, res, next) => {
     // The signUp page for the manager should be rendered here
     res.status(200).json({
@@ -186,6 +194,7 @@ const getSignup = (req, res, next) => {
     })
 }
 
+// Handles POST request for managers signup
 const postSignup = (req, res, next) => {
     const { firstName, lastName, email, password, phoneNumber, businessName, department } = req.body
 
@@ -237,6 +246,7 @@ const postSignup = (req, res, next) => {
         })
 }
 
+// Displays login page for managers signin
 const getLogin = (req, res, next) => {
     // render the managers login page
     res.status(200).json({
@@ -245,8 +255,11 @@ const getLogin = (req, res, next) => {
 }
 
 
+// Handles POST request for managers login
 const postLogin = (req, res, next) => {
     let token = req.cookies.auth
+
+    // Checks if the manager currently has a token, if he does then he is logged in or else he is not
     Manager.findByToken(token, (err, user) => {
         if (err) {
             res.status(400).json({ 
@@ -302,7 +315,10 @@ const postLogin = (req, res, next) => {
     })
 }
 
+// Handles managers logout request
 const logoutUser = (req, res, next) => {
+
+    // Logs out the user by deleting the token from the users database
     req.manager.deleteToken(req.token, (err, user) => {
         if (err){
             res.status(400).json({
@@ -315,7 +331,7 @@ const logoutUser = (req, res, next) => {
     })
 }
 
-// To view all job applications for my department, query the applicant db and check for those that have my id registered under them
+// To view all job applications for my department, query the applicant db and check for those that have the managers id registered under them
 const getJobApplications = (req, res, next) => {
     const managerId = req.params.managerId
     Applicant.find({ manager: managerId })
